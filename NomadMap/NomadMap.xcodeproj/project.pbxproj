@@ -6,7 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		C668D9DF2FA0A28300B1469D /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = C668D9DE2FA0A28300B1469D /* KeychainAccess */; };
+		C668D9E92FA9022400B1469D /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = C668D9E82FA9022400B1469D /* Localizable.xcstrings */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		C668D9E82FA9022400B1469D /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		C6DFD2092F97997A00EF8A65 /* NomadMap.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NomadMap.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -23,6 +29,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C668D9DF2FA0A28300B1469D /* KeychainAccess in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -32,6 +39,7 @@
 		C6DFD2002F97997900EF8A65 = {
 			isa = PBXGroup;
 			children = (
+				C668D9E82FA9022400B1469D /* Localizable.xcstrings */,
 				C6DFD20B2F97997A00EF8A65 /* NomadMap */,
 				C6DFD20A2F97997A00EF8A65 /* Products */,
 			);
@@ -65,6 +73,7 @@
 			);
 			name = NomadMap;
 			packageProductDependencies = (
+				C668D9DE2FA0A28300B1469D /* KeychainAccess */,
 			);
 			productName = NomadMap;
 			productReference = C6DFD2092F97997A00EF8A65 /* NomadMap.app */;
@@ -91,9 +100,13 @@
 			knownRegions = (
 				en,
 				Base,
+				fr,
 			);
 			mainGroup = C6DFD2002F97997900EF8A65;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				C668D9DD2FA0A28300B1469D /* XCRemoteSwiftPackageReference "KeychainAccess" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C6DFD20A2F97997A00EF8A65 /* Products */;
 			projectDirPath = "";
@@ -109,6 +122,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C668D9E92FA9022400B1469D /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -185,6 +199,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -242,6 +257,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -332,6 +348,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C668D9DD2FA0A28300B1469D /* XCRemoteSwiftPackageReference "KeychainAccess" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kishikawakatsumi/KeychainAccess.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C668D9DE2FA0A28300B1469D /* KeychainAccess */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C668D9DD2FA0A28300B1469D /* XCRemoteSwiftPackageReference "KeychainAccess" */;
+			productName = KeychainAccess;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C6DFD2012F97997A00EF8A65 /* Project object */;
 }
