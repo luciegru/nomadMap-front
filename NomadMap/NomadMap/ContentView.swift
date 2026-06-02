@@ -8,13 +8,16 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State var loginVM = LoginViewModel()
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
+        
+        if loginVM.currentUser != nil {
+            OnBoarding5()
+                .environment(loginVM)
+        } else {
+            LoginView().environment(loginVM)
         }
-        .padding()
     }
 }
 

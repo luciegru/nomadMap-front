@@ -16,9 +16,22 @@
 		C6DFD2092F97997A00EF8A65 /* NomadMap.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NomadMap.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C6A96BFC2FCD9656002D72D4 /* Exceptions for "NomadMap" folder in "NomadMap" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C6DFD2082F97997A00EF8A65 /* NomadMap */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C6DFD20B2F97997A00EF8A65 /* NomadMap */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C6A96BFC2FCD9656002D72D4 /* Exceptions for "NomadMap" folder in "NomadMap" target */,
+			);
 			path = NomadMap;
 			sourceTree = "<group>";
 		};
@@ -272,6 +285,7 @@
 				DEVELOPMENT_TEAM = M23A99K3D7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NomadMap/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -304,6 +318,7 @@
 				DEVELOPMENT_TEAM = M23A99K3D7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NomadMap/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

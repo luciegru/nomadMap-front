@@ -45,30 +45,30 @@ struct SignupView: View {
                     VStack(){
                         ScrollView{
                             
-                            CustomTextField(label: "NAME", placeholder: "PLACEHOLDER_NAME", binding: $name, secure: false)
+                            CustomTextField(label: "NAME", placeholder: "PLACEHOLDER_NAME", binding: $name, secure: false, isHeightFixed: true)
                             
                             Spacer()
                             
-                            CustomTextField(label: "FIRSTNAME", placeholder: "PLACEHOLDER_FIRSTNAME", binding: $firstname, secure: false)
+                            CustomTextField(label: "FIRSTNAME", placeholder: "PLACEHOLDER_FIRSTNAME", binding: $firstname, secure: false, isHeightFixed: true)
                             
                             Spacer()
                             
-                            CustomTextField(label: "USERNAME", placeholder: "PLACEHOLDER_USERNAME", binding: $username, secure: false)
+                            CustomTextField(label: "USERNAME", placeholder: "PLACEHOLDER_USERNAME", binding: $username, secure: false, isHeightFixed: true)
                             
                             Spacer()
                             
-                            CustomTextField(label: "EMAIL", placeholder: "PLACEHOLDER_EMAIL", binding: $email, secure: false)
+                            CustomTextField(label: "EMAIL", placeholder: "PLACEHOLDER_EMAIL", binding: $email, secure: false, isHeightFixed: true)
                             
                             
                             Spacer()
                             
                             
                             
-                            CustomTextField(label: "PASSWORD", placeholder: "PLACEHOLDER_PASSWORD", binding: $password, secure: true)
+                            CustomTextField(label: "PASSWORD", placeholder: "PLACEHOLDER_PASSWORD", binding: $password, secure: true, isHeightFixed: true)
                             
                             Spacer()
                             
-                            CustomTextField(label: "CONFIRM_PASSWORD", placeholder: "PLACEHOLDER_CONFIRM_PASSWORD", binding: $passwordConfirmation, secure: true)
+                            CustomTextField(label: "CONFIRM_PASSWORD", placeholder: "PLACEHOLDER_CONFIRM_PASSWORD", binding: $passwordConfirmation, secure: true, isHeightFixed: true)
                         }
                         }.padding(.vertical, 20)
                     

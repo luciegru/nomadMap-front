@@ -8,23 +8,21 @@
 import SwiftUI
 
 struct CustomTextField: View {
-    
     var label: LocalizedStringKey
     var placeholder: LocalizedStringKey
     var binding: Binding<String>
     var secure: Bool
-    
+    var isHeightFixed: Bool
+
     var body: some View {
-        VStack(alignment: .leading){
+        VStack(alignment: .leading, spacing: 8) {
             Text(label)
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.white)
-            
-            ZStack(alignment: .leading){
+
+            ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: 10)
                     .fill(Color("black_1").opacity(0.5))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
                             .strokeBorder(
@@ -35,41 +33,37 @@ struct CustomTextField: View {
                                 ),
                                 lineWidth: 2
                             )
-                        
                     )
-                
-                HStack{
-                    if binding.wrappedValue.isEmpty{
-                        Text(placeholder)
-                            .foregroundStyle(Color.gray.opacity(0.5))
-                    }
-                    
-                    Spacer()
-                }.padding(.leading, 10)
-                
-                
-                if !secure {
-                    
-                    TextField("", text: binding)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(Color.black.opacity(0.00001))
-                        .foregroundStyle(Color.white)
-                        .textInputAutocapitalization(.never)
-                        .padding(.leading, 10)
-                    
-                } else {
-                    SecureField("", text: binding)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(Color.black.opacity(0.00001))
-                        .foregroundStyle(Color.white)
-                        .textInputAutocapitalization(.never)
-                        .padding(.leading, 10)
+
+                // Placeholder
+                if binding.wrappedValue.isEmpty {
+                    Text(placeholder)
+                        .foregroundStyle(Color.gray.opacity(0.5))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 15)
                 }
+
+                // Input
+                Group {
+                    if secure {
+                        SecureField("", text: binding)
+                    } else if !isHeightFixed {
+                        TextField("", text: binding, axis: .vertical)
+                            .lineLimit(1...6)
+                    } else {
+                        TextField("", text: binding)
+                    }
+                }
+                .textInputAutocapitalization(.never)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 15)
+                .foregroundStyle(.white)
+                .autocorrectionDisabled()
+                .keyboardType(.default)
             }
-        }.padding(.horizontal, 40)
-        
+            .frame(minHeight: 50, maxHeight: isHeightFixed ? 50 : 300)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 40)
     }
 }
-

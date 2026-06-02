@@ -1,5 +1,5 @@
 //
-//  OnBoarding1.swift
+//  OnBoarding3.swift
 //  NomadMap
 //
 //  Created by Lucie Grunenberger  on 12/05/2026.
@@ -7,15 +7,12 @@
 
 import SwiftUI
 
-struct OnBoarding1: View {
-    
-    @State private var viewModel = OnboardingViewModel()
-    @Environment(LoginViewModel.self) private var loginVM
+struct OnBoarding3: View {
     @State private var isVisible = false
-    private var introductionText: LocalizedStringResource = "WELCOME_TEXT"
-    
+    @Environment(LoginViewModel.self) private var loginVM
     
     var body: some View {
+        
         NavigationStack {
             VStack {
                 ZStack{
@@ -28,10 +25,11 @@ struct OnBoarding1: View {
                     VStack{
                         if isVisible {
                             
-                            Text("U_WELCOME")
+                            Text("TUTO_1")
                                 .font(.largeTitle)
                                 .bold()
                                 .customGradient()
+                                .padding(.horizontal, 30)
                             
                                 .transition(.move(edge: .leading).combined(with: .opacity))
                             
@@ -39,21 +37,18 @@ struct OnBoarding1: View {
                         
                         Spacer()
                         
-                        Text(viewModel.displayedText)
-                            .foregroundStyle(Color.gray)
-                            .padding(.horizontal, 30)
-                            .multilineTextAlignment(.center)
-                        
+                            Text("ADD_FIRSTS_INFOS")
+                                .foregroundStyle(Color.gray)
+
                         Spacer()
                         
                         HStack{
                             Spacer()
-                            
-                            NavigationLink(destination: {
-                                Onboarding2().environment(loginVM)
-                            }, label: {
-                                GoButton(muted: false)
-                            })
+                                NavigationLink(destination: {
+                                    OnBoarding4().environment(loginVM)
+                                }, label: {
+                                    GoButton(muted:false)
+                                })
                             
                         }.padding(.bottom, 60)
                             .padding(.trailing, 30)
@@ -67,10 +62,7 @@ struct OnBoarding1: View {
                 }
                 
             }
-            
-            .task {
-                let translated = String(localized: introductionText)
-                await viewModel.typeWriterEffect(translationKey: translated)        }
+   
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.black)
             .ignoresSafeArea()
@@ -79,7 +71,7 @@ struct OnBoarding1: View {
         }.navigationBarBackButtonHidden()
     }
 }
-#Preview {
-    OnBoarding1()
-}
 
+#Preview {
+    OnBoarding3()
+}

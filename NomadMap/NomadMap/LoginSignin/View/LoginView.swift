@@ -45,9 +45,9 @@ struct LoginView: View {
                 
                 Spacer()
                 
-                CustomTextField(label: "EMAIL", placeholder: "PLACEHOLDER_EMAIL", binding: $email, secure: false).padding(.bottom, 20)
+                CustomTextField(label: "EMAIL", placeholder: "PLACEHOLDER_EMAIL", binding: $email, secure: false, isHeightFixed: true).padding(.bottom, 20)
                 
-                CustomTextField(label: "PASSWORD",placeholder: "PLACEHOLDER_PASSWORD", binding: $password, secure: true)
+                CustomTextField(label: "PASSWORD",placeholder: "PLACEHOLDER_PASSWORD", binding: $password, secure: true, isHeightFixed: true)
                 
                 
                 
@@ -84,8 +84,6 @@ struct LoginView: View {
                             
                             if loginVM.isAuthenticated {
                                 response = "log"
-                                print(loginVM.token ?? "no token")
-                                print(loginVM.currentUser?.email ?? "nouser")
                             }
                         }
                     }
