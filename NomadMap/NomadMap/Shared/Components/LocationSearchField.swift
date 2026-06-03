@@ -10,6 +10,7 @@ import SwiftUI
 import MapKit
 
 struct LocationSearchField: View {
+    var width: CGFloat?
     @State private var vm = LocationSearchViewModel()
     var onLocationSelected: (SelectedLocation) -> Void
     
@@ -18,7 +19,7 @@ struct LocationSearchField: View {
 
             HStack {
                 Image(systemName: "magnifyingglass")
-                    .foregroundStyle(Color.gray)
+                    .customGradient()
                 TextField("", text: $vm.searchText)
                     .foregroundStyle(.gray)
                     .textInputAutocapitalization(.never)
@@ -46,7 +47,10 @@ struct LocationSearchField: View {
                         lineWidth: 2
                     )
             )
+            .frame(width: (width != nil) ? width : .infinity)
             .cornerRadius(10)
+            
+            
             
             if !vm.suggestions.isEmpty {
                 ScrollView{
@@ -83,10 +87,10 @@ struct LocationSearchField: View {
                     .background(Color("black_1"))
                     .cornerRadius(10)
                     .shadow(color: .black.opacity(0.5), radius: 10)
-                }.frame(maxHeight: 300)
+                }.frame(width: (width != nil) ? width : .infinity)
+                    .frame(maxHeight: 300)
             }
         }
-        .padding(.horizontal, 40)
     }
 }
 

@@ -13,7 +13,7 @@ struct ContentView: View {
     var body: some View {
         
         if loginVM.currentUser != nil {
-            OnBoarding5()
+            LandingPageView()
                 .environment(loginVM)
         } else {
             LoginView().environment(loginVM)

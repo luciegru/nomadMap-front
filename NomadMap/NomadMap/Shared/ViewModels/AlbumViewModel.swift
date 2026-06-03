@@ -18,13 +18,15 @@ class AlbumViewModel {
     var albums: [Album] = []
     var lastCreatedAlbum: Album? = nil
     
-    private var loginVM: LoginViewModel
+    private var loginVM: LoginViewModel = LoginViewModel()
     
+    init(){
+    }
     init(loginVM: LoginViewModel) {
         self.loginVM = loginVM
     }
     
-
+    
     
     //    var user: User? = nil
     
@@ -80,11 +82,11 @@ class AlbumViewModel {
                     }
                 } catch {
                     print("❌ [DEBUG DÉCODAGE] dss albumVM L'erreur est : \(error)")
-                        
-                        // 🚨 AJOUTE CE PRINT ICI pour voir le texte brut du serveur :
-                        if let rawJSON = String(data: data, encoding: .utf8) {
-                            print("📄 [DEBUG DÉCODAGE] Contenu brut qui a fait planter le décodage : \(rawJSON)")
-                        }                }
+                    
+                    // 🚨 AJOUTE CE PRINT ICI pour voir le texte brut du serveur :
+                    if let rawJSON = String(data: data, encoding: .utf8) {
+                        print("📄 [DEBUG DÉCODAGE] Contenu brut qui a fait planter le décodage : \(rawJSON)")
+                    }                }
             }
         }.resume()
         
@@ -129,6 +131,40 @@ class AlbumViewModel {
         
     }
     
-}
+    func getCurrentUserAlbums() async throws -> [Album] {
+        guard let token = loginVM.token else {
+            throw URLError(.userAuthenticationRequired) }
+        guard let url = URL(string: "http://localhost:8080/album/current") else {
+            throw URLError(.badURL) }
         
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        URLSession.shared.dataTask(with: request) { (data, response, error) in
+            if let data = data {
+//                let jsonString = String(data: data, encoding: .utf8)
+//                print(jsonString ?? "No JSON")
+                
+                do{
+                    let decoder = JSONDecoder()
+                    decoder.dateDecodingStrategy = .iso8601
+                    
+                    let decodedAlbums = try decoder.decode([Album].self, from: data)
+                    DispatchQueue.main.async {
+                        self.albums = decodedAlbums
+                    }
+                }
+                catch {
+                    print("Error decoding: \(error)")
+                }
+            }
+            else if let error {
+                print("Error: \(error)")
+            }
+        }.resume()
+        return self.albums
+    }
+}
         

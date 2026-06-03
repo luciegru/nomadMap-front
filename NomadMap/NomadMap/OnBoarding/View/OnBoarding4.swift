@@ -101,7 +101,7 @@ struct OnBoarding4: View {
                                         self.country = location.country ?? ""
                                         self.latitude = location.latitude
                                         self.longitude = location.longitude
-                                    }
+                                    }.padding(.horizontal, 40)
                                 }
                                 
                             }.padding(.vertical, 40)
@@ -162,13 +162,17 @@ struct OnBoarding4: View {
                             
                             HStack{
                                 Button(action:{
-                                    publicAlbum.toggle()
+                                    if(!publicAlbum){
+                                        publicAlbum.toggle()
+                                    }
                                 }, label:{
                                     CustomGradientButton(text: "PUBLIC_ALBUM", muted: publicAlbum ? false : true)
                                 }
                                 )
                                 Button(action:{
-                                    publicAlbum.toggle()
+                                    if(publicAlbum){
+                                        publicAlbum.toggle()
+                                    }
                                 }, label:{
                                     CustomGradientButton(text: "PRIVATE_ALBUM", muted: publicAlbum ? true : false)
                                 }
@@ -313,5 +317,5 @@ struct OnBoarding4: View {
 }
 
 #Preview {
-    OnBoarding4()
+    OnBoarding4().environment(LoginViewModel())
 }
