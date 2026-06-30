@@ -46,6 +46,8 @@ class LoginViewModel {
         return token != nil && currentUser != nil
     }
     
+    var dashboardInfos: DashboardDTO? = nil
+    
     
     init() {
         token = try? keychain.get("authToken") ?? nil
@@ -220,6 +222,41 @@ class LoginViewModel {
         }.resume()
 
     }
+    
+    func getDashboardInfos() async throws {
+        guard let token = token else {throw URLError(.userAuthenticationRequired) }
+        guard let url = URL(string: "http://localhost:8080/user/dashboard") else { throw URLError(.badURL) }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        URLSession.shared.dataTask(with: request) { (data, response, error) in
+            if let data = data {
+//                            let jsonString = String(data: data, encoding: .utf8)
+//                            print(jsonString ?? "No JSON")
+                
+                do{
+                    let decoder = JSONDecoder()
+                    decoder.dateDecodingStrategy = .iso8601
+                    
+                    let decodedDashboard = try decoder.decode(DashboardDTO.self, from: data)
+                    DispatchQueue.main.async {
+                        self.dashboardInfos = decodedDashboard
+                    }
+                }
+                catch {
+                    print("Error decoding: \(error)")
+                }
+            }
+            else if let error {
+                print("Error: \(error)")
+            }
+        }.resume()
+
+    }
+
     
 }
 

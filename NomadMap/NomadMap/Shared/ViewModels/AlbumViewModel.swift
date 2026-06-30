@@ -15,8 +15,10 @@ class AlbumViewModel {
     
     private let keychain = Keychain(service: Bundle.main.bundleIdentifier ?? "com.nomadMap.app")
     
-    var albums: [Album] = []
+    var myAlbums: [Album] = []
+    var sharedAlbums: [Album] = []
     var lastCreatedAlbum: Album? = nil
+    var mySavedAlbums: [Album] = []
     
     private var loginVM: LoginViewModel = LoginViewModel()
     
@@ -77,16 +79,16 @@ class AlbumViewModel {
                     decoder.dateDecodingStrategy = .iso8601
                     let newAlbum = try decoder.decode(Album.self, from: data)
                     DispatchQueue.main.async {
-                        self.albums.append(newAlbum)
+                        self.myAlbums.append(newAlbum)
                         self.lastCreatedAlbum = newAlbum
                     }
                 } catch {
                     print("❌ [DEBUG DÉCODAGE] dss albumVM L'erreur est : \(error)")
                     
-                    // 🚨 AJOUTE CE PRINT ICI pour voir le texte brut du serveur :
-                    if let rawJSON = String(data: data, encoding: .utf8) {
-                        print("📄 [DEBUG DÉCODAGE] Contenu brut qui a fait planter le décodage : \(rawJSON)")
-                    }                }
+                    //                    if let rawJSON = String(data: data, encoding: .utf8) {
+                    //                        print("📄 [DEBUG DÉCODAGE] Contenu brut qui a fait planter le décodage : \(rawJSON)")
+                    //                    }
+                }
             }
         }.resume()
         
@@ -121,8 +123,8 @@ class AlbumViewModel {
         let updatedAlbum = try decoder.decode(Album.self, from: data)
         
         await MainActor.run {
-            if let index = self.albums.firstIndex(where: { $0.id == updatedAlbum.id }) {
-                self.albums[index] = updatedAlbum
+            if let index = self.myAlbums.firstIndex(where: { $0.id == updatedAlbum.id }) {
+                self.myAlbums[index] = updatedAlbum
                 
             }
             
@@ -131,40 +133,68 @@ class AlbumViewModel {
         
     }
     
-    func getCurrentUserAlbums() async throws -> [Album] {
-        guard let token = loginVM.token else {
-            throw URLError(.userAuthenticationRequired) }
-        guard let url = URL(string: "http://localhost:8080/album/current") else {
-            throw URLError(.badURL) }
+    func getCurrentUserAlbums() async throws {
+        guard let token = loginVM.token else { throw URLError(.userAuthenticationRequired) }
+        guard let url = URL(string: "http://localhost:8080/album/current") else { throw URLError(.badURL) }
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
-        URLSession.shared.dataTask(with: request) { (data, response, error) in
-            if let data = data {
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let decodedAlbums = try decoder.decode([Album].self, from: data)
+        
+        await MainActor.run {
+            self.myAlbums = decodedAlbums
+        }
+    }
+    
+    func getCurrentUserSavedAlbums() async throws {
+        guard let token = loginVM.token else { throw URLError(.userAuthenticationRequired) }
+        guard let url = URL(string: "http://localhost:8080/save/current") else { throw URLError(.badURL) }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        let (data, _) = try await URLSession.shared.data(for: request)
 //                let jsonString = String(data: data, encoding: .utf8)
-//                print(jsonString ?? "No JSON")
-                
-                do{
-                    let decoder = JSONDecoder()
-                    decoder.dateDecodingStrategy = .iso8601
-                    
-                    let decodedAlbums = try decoder.decode([Album].self, from: data)
-                    DispatchQueue.main.async {
-                        self.albums = decodedAlbums
-                    }
-                }
-                catch {
-                    print("Error decoding: \(error)")
-                }
-            }
-            else if let error {
-                print("Error: \(error)")
-            }
-        }.resume()
-        return self.albums
+//                print("target:  ", jsonString ?? "No JSON")
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let decodedAlbums = try decoder.decode([Album].self, from: data)
+        
+        await MainActor.run {
+            self.mySavedAlbums = decodedAlbums
+        }
+    }
+
+
+    func getSharedAlbums() async throws {
+        guard let token = loginVM.token else {
+            throw URLError(.userAuthenticationRequired) }
+        guard let url = URL(string: "http://localhost:8080/album/shared") else {
+            throw URLError(.badURL) }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let decodedAlbums = try decoder.decode([Album].self, from: data)
+        
+        await MainActor.run {
+            self.sharedAlbums = decodedAlbums
+        }
+
     }
 }
         

@@ -47,7 +47,8 @@ struct LocationSearchField: View {
                         lineWidth: 2
                     )
             )
-            .frame(width: (width != nil) ? width : .infinity)
+            .frame(width: width, alignment: .center)
+            .frame(maxWidth: width == nil ? .infinity : nil)
             .cornerRadius(10)
             
             
@@ -87,8 +88,10 @@ struct LocationSearchField: View {
                     .background(Color("black_1"))
                     .cornerRadius(10)
                     .shadow(color: .black.opacity(0.5), radius: 10)
-                }.frame(width: (width != nil) ? width : .infinity)
-                    .frame(maxHeight: 300)
+                }
+                .frame(width: width, alignment: .center)
+                .frame(maxWidth: width == nil ? .infinity : nil)
+                .frame(maxHeight: 300)
             }
         }
     }
@@ -98,3 +101,4 @@ struct LocationSearchField: View {
     LocationSearchField { location in
     }
 }
+

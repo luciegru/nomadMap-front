@@ -225,8 +225,8 @@ struct OnBoarding5: View {
                 .background(Color.black)
                 .ignoresSafeArea()
                 .navigationDestination(isPresented: $navigate) {
-                    //                LandingPage()
-                    //                    .environment(loginVM)
+                                    LandingPageView()
+                                        .environment(loginVM)
                                 }
             
         }

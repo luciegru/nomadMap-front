@@ -17,12 +17,16 @@ class MediaViewModel {
 
     
     var medias: [Media] = []
-    private var loginVM: LoginViewModel
     
+    private var loginVM: LoginViewModel = LoginViewModel()
+    
+    init(){
+    }
     init(loginVM: LoginViewModel) {
         self.loginVM = loginVM
     }
     
+
 
     //    var user: User? = nil
     

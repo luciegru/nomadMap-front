@@ -30,44 +30,47 @@ struct CustomMapView: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: MKMapView, context: Context) {
-            let currentAnnotations = uiView.annotations.compactMap { $0 as? AlbumAnnotation }
+        let currentAnnotations = uiView.annotations.compactMap { $0 as? AlbumAnnotation }
+        
+        let currentIds = currentAnnotations.map { $0.album.id.uuidString + ($0.album.coverPicture ?? "") }
+        let newIds = albums.map { $0.id.uuidString + ($0.coverPicture ?? "") }
+        
+        if currentIds != newIds {
+            uiView.removeAnnotations(uiView.annotations)
             
-            if currentAnnotations.count != albums.count {
-                uiView.removeAnnotations(uiView.annotations)
+            var newAnnotations: [AlbumAnnotation] = []
+            let groupedAlbums = Dictionary(grouping: albums) { "\($0.latitude),\($0.longitude)" }
+            
+            for (_, albumsAtLocation) in groupedAlbums {
+                let count = albumsAtLocation.count
                 
-                var newAnnotations: [AlbumAnnotation] = []
-                let groupedAlbums = Dictionary(grouping: albums) { "\($0.latitude),\($0.longitude)" }
-                
-                for (_, albumsAtLocation) in groupedAlbums {
-                    let count = albumsAtLocation.count
+                for (index, album) in albumsAtLocation.enumerated() {
+                    let annotation = AlbumAnnotation(album: album)
                     
-                    for (index, album) in albumsAtLocation.enumerated() {
-                        let annotation = AlbumAnnotation(album: album)
-                        
-                        if count > 1 {
-                            let angle = (Double(index) * 2 * .pi) / Double(count)
-                            let radius = 0.0003
-                            annotation.customCoordinate = CLLocationCoordinate2D(
-                                latitude: album.latitude + (radius * sin(angle)),
-                                longitude: album.longitude + (radius * cos(angle))
-                            )
-                        }
-                        newAnnotations.append(annotation)
+                    if count > 1 {
+                        let angle = (Double(index) * 2 * .pi) / Double(count)
+                        let radius = 0.0003
+                        annotation.customCoordinate = CLLocationCoordinate2D(
+                            latitude: album.latitude + (radius * sin(angle)),
+                            longitude: album.longitude + (radius * cos(angle))
+                        )
                     }
+                    newAnnotations.append(annotation)
                 }
-                
-                uiView.addAnnotations(newAnnotations)
             }
             
-            if let camera = position.camera {
-                let mapCamera = MKMapCamera(
-                    lookingAtCenter: camera.centerCoordinate,
-                    fromEyeCoordinate: camera.centerCoordinate,
-                    eyeAltitude: camera.distance
-                )
-                uiView.setCamera(mapCamera, animated: true)
-            }
+            uiView.addAnnotations(newAnnotations)
         }
+        
+        if let camera = position.camera {
+            let mapCamera = MKMapCamera(
+                lookingAtCenter: camera.centerCoordinate,
+                fromEyeCoordinate: camera.centerCoordinate,
+                eyeAltitude: camera.distance
+            )
+            uiView.setCamera(mapCamera, animated: true)
+        }
+    }
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
@@ -80,25 +83,25 @@ struct CustomMapView: UIViewRepresentable {
         }
         
         func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-                    mapView.deselectAnnotation(view.annotation, animated: true)
-                    
-                    if let albumAnno = view.annotation as? AlbumAnnotation {
-                        parent.onAlbumTap(albumAnno.album)
-                    }
-                    else if let clusterAnno = view.annotation as? MKClusterAnnotation {
-                        parent.onClusterTap(clusterAnno.coordinate)
-                    }
-                }    }
+            mapView.deselectAnnotation(view.annotation, animated: true)
+            
+            if let albumAnno = view.annotation as? AlbumAnnotation {
+                parent.onAlbumTap(albumAnno.album)
+            }
+            else if let clusterAnno = view.annotation as? MKClusterAnnotation {
+                parent.onClusterTap(clusterAnno.coordinate)
+            }
+        }    }
 }
 
 class AlbumAnnotation: NSObject, MKAnnotation {
     let album: Album
     
     var customCoordinate: CLLocationCoordinate2D?
-        
-        var coordinate: CLLocationCoordinate2D {
-            return customCoordinate ?? CLLocationCoordinate2D(latitude: album.latitude, longitude: album.longitude)
-        }
+    
+    var coordinate: CLLocationCoordinate2D {
+        return customCoordinate ?? CLLocationCoordinate2D(latitude: album.latitude, longitude: album.longitude)
+    }
     var title: String? { album.title }
     
     init(album: Album) {
@@ -115,21 +118,12 @@ class AlbumAnnotationView: MKAnnotationView {
             collisionMode = .circle
             displayPriority = .required
             let customView = VStack(alignment: .leading) {
-                Text(albumAnno.album.title)
-                    .font(.caption2).bold()
-                    .foregroundColor(.white)
-                Image(albumAnno.album.coverPicture ?? "")
-                    .resizable()
-                    .frame(width: 60, height: 40)
-                    .cornerRadius(4)
+                AlbumCard(album: albumAnno.album)
             }
-                .padding(6)
-                .background(Color.purple.opacity(0.8))
-                .cornerRadius(8)
             
             let hostingController = UIHostingController(rootView: customView)
             hostingController.view.backgroundColor = .clear
-            hostingController.view.frame = CGRect(x: -36, y: -25, width: 72, height: 50)
+            hostingController.view.frame = CGRect(x: -30, y: -80, width: 72, height: 50)
             
             subviews.forEach { $0.removeFromSuperview() }
             addSubview(hostingController.view)
@@ -143,23 +137,16 @@ class ClusterAnnotationView: MKAnnotationView {
         didSet {
             
             displayPriority = .defaultHigh
-
+            
             guard let clusterAnno = annotation as? MKClusterAnnotation else { return }
             
             let count = clusterAnno.memberAnnotations.count
             
-            let clusterView = Text("\(count)")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.white)
-                .frame(width: 40, height: 40)
-                .background(Color.purple)
-                .clipShape(Circle())
-                .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                .shadow(radius: 4)
+            let clusterView = ClusterCard(count: count)
             
             let hostingController = UIHostingController(rootView: clusterView)
             hostingController.view.backgroundColor = .clear
-            hostingController.view.frame = CGRect(x: -20, y: -20, width: 40, height: 40)
+            hostingController.view.frame = CGRect(x: -30, y: -80, width: 40, height: 40)
             
             subviews.forEach { $0.removeFromSuperview() }
             addSubview(hostingController.view)
