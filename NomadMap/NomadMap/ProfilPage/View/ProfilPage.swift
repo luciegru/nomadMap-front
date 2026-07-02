@@ -14,6 +14,8 @@ struct ProfilPage: View {
     @Environment(AlbumViewModel.self) private var albumVM
     @State var badgeVM = BadgeViewModel()
     @State var levelVM = LevelViewModel()
+    @State private var showAlert: Bool = false
+    @State private var alertMessage: String = ""
     
     var body: some View {
         NavigationStack {
@@ -141,6 +143,12 @@ struct ProfilPage: View {
 //TODO: clean the storage logic 
                 }
             }
+            .alert("Oops 🙃", isPresented: $showAlert, actions: {
+                Button("OK", role: .cancel) { }
+            }, message: {
+                Text(alertMessage)
+            })
+
             .background(Color("black_1"))
             .ignoresSafeArea(edges: .top)
             
@@ -155,10 +163,14 @@ struct ProfilPage: View {
                     async let savedAlbumsLoad = albumVM.getCurrentUserSavedAlbums()
                     
                     let _ = try await (userLoad, allBadgesLoad, myBadgesLoad, currentUserLevel, targetLevel, dashboardLoad, savedAlbumsLoad)
-                } catch {
-                    print("Erreur de chargement: \(error)")
-                }
-            }
+                } catch let error as AppError {
+                                showAlert = true
+                                alertMessage = error.errorDescription ?? ""
+                            } catch {
+                                alertMessage = "Impossible de charger les données de l'album. Vérifie ta connexion."
+                                showAlert = true
+                            }
+                                        }
         }
     }
 }

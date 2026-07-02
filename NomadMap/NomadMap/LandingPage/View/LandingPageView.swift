@@ -15,6 +15,7 @@ struct LandingPageView: View {
     
     @State var mediaVM = MediaViewModel()
     @State var albumVM = AlbumViewModel()
+    @State var participationVM = ParticipationViewModel()
     @State var mapVM = MapViewModel()
     @State private var refreshTrigger = false
     @State private var showPublicAlbums: Bool = false
@@ -31,6 +32,9 @@ struct LandingPageView: View {
     @State public var country: String = ""
     @State public var albumPictures: [PhotosPickerItem] = []
     @State public var publicAlbum: Bool = false
+    @State private var selectedAlbum: Album? = nil
+    @State private var showAlert: Bool = false
+    @State private var alertMessage: String = ""
     
     @State private var position: MapCameraPosition = .camera(
         MapCamera(
@@ -57,6 +61,9 @@ struct LandingPageView: View {
                     position: $position,
                     onAlbumTap: { album in
                         zoomOn(CLLocationCoordinate2D(latitude: album.latitude, longitude: album.longitude), distance: 2_000_000)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            self.selectedAlbum = album
+                        }
                     },
                     onClusterTap: { clusterCoordinate in
                         let currentDistance = position.camera?.distance ?? 25_000_000
@@ -73,7 +80,7 @@ struct LandingPageView: View {
                     HStack(alignment: .center){
                         
                         NavigationLink(destination: {
-                            ProfilPage().environment(loginVM)
+                            ProfilPage().environment(loginVM).environment(albumVM)
                         }, label: {
                             CustomGradientSquareButton(image:"person.fill", muted: false)
                         })
@@ -140,12 +147,32 @@ struct LandingPageView: View {
                     }
                 }
             }
+            .alert("Oops 🙃", isPresented: $showAlert, actions: {
+                Button("OK", role: .cancel) { }
+            }, message: {
+                Text(alertMessage)
+            })
             .background(Color.black)
             .task {
-                try? await albumVM.getCurrentUserAlbums()
-                try? await albumVM.getSharedAlbums()
+                do{
+                try await albumVM.getCurrentUserAlbums()
+                try await albumVM.getSharedAlbums()
+                } catch let error as AppError {
+                                showAlert = true
+                                alertMessage = error.errorDescription ?? ""
+                            } catch {
+                                alertMessage = "Impossible de charger les données de l'album. Vérifie ta connexion."
+                                showAlert = true
+                            }
+                            
             }
-            
+            .navigationDestination(item: $selectedAlbum) { album in
+                AlbumDetailView(album: album)
+                    .environment(loginVM)
+                    .environment(albumVM)
+                    .environment(participationVM)
+            }
+
             .sheet(isPresented: $showCreateAlbum) {
                 VStack{
                     Text("CREATE_ALBUM")
@@ -161,72 +188,86 @@ struct LandingPageView: View {
                     Button(action:{
                         Task{
                             
-                            try await albumVM.createAlbum(
-                                with: [
-                                    "userId":loginVM.currentUser?.id.uuidString ?? UUID().uuidString,
-                                    "title": albumName,
-                                    "description": albumDescription,
-                                    "continent": continent,
-                                    "country": country,
-                                    "town": town,
-                                    "latitude": latitude,
-                                    "longitude": longitude,
-                                    "journeyStartDate": ISO8601DateFormatter().string(from: date),
-                                    "visibility": publicAlbum ? 1 : 0,
-                                ]
-                            )
-                            
-                            var completed = 0.0
-                            
-                            //TODO: IMPORTANT: refacto de toute la landing
-                            await withTaskGroup(of: Void.self) { group in
-                                let maxConcurrentUploads = 3
-                                var activeUploads = 0
+                            do {
+                                try await albumVM.createAlbum(
+                                    with: [
+                                        "userId":loginVM.currentUser?.id.uuidString ?? UUID().uuidString,
+                                        "title": albumName,
+                                        "description": albumDescription,
+                                        "continent": continent,
+                                        "country": country,
+                                        "town": town,
+                                        "latitude": latitude,
+                                        "longitude": longitude,
+                                        "journeyStartDate": ISO8601DateFormatter().string(from: date),
+                                        "visibility": publicAlbum ? 1 : 0,
+                                    ]
+                                )
                                 
-                                for media in albumPictures {
-                                    if activeUploads >= maxConcurrentUploads {
+                                var completed = 0.0
+                                
+                                //TODO: IMPORTANT: refacto de toute la landing
+                                
+                                
+                                await withTaskGroup(of: Void.self) { group in
+                                    let maxConcurrentUploads = 3
+                                    var activeUploads = 0
+                                    
+                                    for media in albumPictures {
+                                        if activeUploads >= maxConcurrentUploads {
+                                            await group.next()
+                                            activeUploads -= 1
+                                        }
+                                        
+                                        activeUploads += 1
+                                        group.addTask {
+                                            do {
+                                                let metadata = await UploadService.getMetadata(from: media)
+                                                
+                                                let finalHdUrl = try await UploadService.uploadImage(media)
+                                                
+                                                let finalThumbnailUrl = try await UploadService.uploadThumbnail(media)
+                                                
+                                                try await mediaVM.createMedia(with: [
+                                                    "userId": loginVM.currentUser?.id.uuidString ??  UUID().uuidString,
+                                                    "albumId": albumVM.lastCreatedAlbum?.id.uuidString ?? "",
+                                                    "latitude": metadata.latitude ?? 0.0,
+                                                    "longitude": metadata.longitude ?? 0.0,
+                                                    "mediaHQ": finalHdUrl,
+                                                    "lowQualityThumbnail": finalThumbnailUrl,
+                                                    "size": metadata.fileSize ?? 0
+                                                ])
+                                                
+                                                await MainActor.run {
+                                                    completed += 1
+                                                }
+                                                
+                                            } catch {
+                                            }
+                                        }
+                                    }
+                                    while activeUploads > 0 {
                                         await group.next()
                                         activeUploads -= 1
                                     }
-                                    
-                                    activeUploads += 1
-                                    group.addTask {
-                                        do {
-                                            let metadata = await UploadService.getMetadata(from: media)
-                                            
-                                            let finalHdUrl = try await UploadService.uploadImage(media)
-                                            
-                                            let finalThumbnailUrl = try await UploadService.uploadThumbnail(media)
-                                            
-                                            try await mediaVM.createMedia(with: [
-                                                "userId": loginVM.currentUser?.id.uuidString ??  UUID().uuidString,
-                                                "albumId": albumVM.lastCreatedAlbum?.id.uuidString ?? "",
-                                                "latitude": metadata.latitude ?? 0.0,
-                                                "longitude": metadata.longitude ?? 0.0,
-                                                "mediaHQ": finalHdUrl,
-                                                "lowQualityThumbnail": finalThumbnailUrl,
-                                                "size": metadata.fileSize ?? 0
-                                            ])
-                                            
-                                            await MainActor.run {
-                                                completed += 1
-                                            }
-                                            
-                                        } catch {
-                                        }
-                                    }
                                 }
-                                while activeUploads > 0 {
-                                    await group.next()
-                                    activeUploads -= 1
-                                }
+                                showCreateAlbum = false
+                                
+                                
+                                try await Task.sleep(nanoseconds: 3_000_000_000)
+                                
+                                try await participationVM.createParticipation(albumId: albumVM.lastCreatedAlbum?.id.uuidString ?? "", role: UserRole.owner)
+                                
+                                try await albumVM.getCurrentUserAlbums()
+                                try await albumVM.getSharedAlbums()
+                                
+                            } catch let error as AppError {
+                                showAlert = true
+                                alertMessage = error.errorDescription ?? ""
+                            } catch {
+                                alertMessage = "Impossible de charger les données de l'album. Vérifie ta connexion."
+                                showAlert = true
                             }
-                            showCreateAlbum = false
-                            
-                            try await Task.sleep(nanoseconds: 3_000_000_000)
-                            
-                            try await albumVM.getCurrentUserAlbums()
-                            try await albumVM.getSharedAlbums()
                             
                         }
                     }, label: {

@@ -11,6 +11,8 @@ struct OnBoarding5: View {
     @State private var isVisible: Bool = false
     @Environment(LoginViewModel.self) private var loginVM
     @State private var navigate: Bool = false
+    @State private var showAlert: Bool = false
+    @State private var alertMessage: String = ""
     
     
     var body: some View {
@@ -197,7 +199,16 @@ struct OnBoarding5: View {
                                 Button(action: {
                                     
                                     Task{
+                                        do{
                                         try await loginVM.updateCurrentUser(with: ["accountStatus" : 1], id: loginVM.currentUser!.id)
+                                        } catch let error as AppError {
+                                                        showAlert = true
+                                                        alertMessage = error.errorDescription ?? ""
+                                                    } catch {
+                                                        alertMessage = "Impossible de charger les données de l'album. Vérifie ta connexion."
+                                                        showAlert = true
+                                                    }
+                                                    
                                     }
 
                                     navigate = true
@@ -220,6 +231,12 @@ struct OnBoarding5: View {
                     }
                     
                 }
+                .alert("Oops 🙃", isPresented: $showAlert, actions: {
+                    Button("OK", role: .cancel) { }
+                }, message: {
+                    Text(alertMessage)
+                })
+
             
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color.black)

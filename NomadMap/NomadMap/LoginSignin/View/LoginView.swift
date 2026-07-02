@@ -11,8 +11,9 @@ struct LoginView: View {
     
     @State var email: String = ""
     @State var password: String = ""
-    
     @State var response: String = ""
+    @State private var showAlert: Bool = false
+    @State private var alertMessage: String = ""
     
     @Environment(LoginViewModel.self) private var loginVM
     
@@ -72,19 +73,28 @@ struct LoginView: View {
                     response = ""
                     
                     if email.isEmpty || password.isEmpty {
-                        response = LoginError.wrongCredentials.errorDescription ?? "ERROR_UNKNOWN"
+                        response = AppError.wrongCredentials.errorDescription ?? "ERROR_UNKNOWN"
                     }  else {
                         
                         Task{
-                            await loginVM.login(email: email, password: password)
                             
-                            if let error = loginVM.errorMessage {
-                                response = error.errorDescription ?? "ERROR_UNKNOWN"
-                            }
+                            do{
+                            try await loginVM.login(email: email, password: password)
+                            
+                            
                             
                             if loginVM.isAuthenticated {
                                 response = "log"
                             }
+                                
+                            } catch let error as AppError {
+                                            showAlert = true
+                                            alertMessage = error.errorDescription ?? ""
+                                        } catch {
+                                            alertMessage = "Impossible de charger les données de l'album. Vérifie ta connexion."
+                                            showAlert = true
+                                        }
+                                        
                         }
                     }
                 }, label:{
@@ -144,6 +154,12 @@ struct LoginView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.black)
             .ignoresSafeArea()
+            .alert("Oops 🙃", isPresented: $showAlert, actions: {
+                Button("OK", role: .cancel) { }
+            }, message: {
+                Text(alertMessage)
+            })
+
             
         }.navigationBarBackButtonHidden()
     }

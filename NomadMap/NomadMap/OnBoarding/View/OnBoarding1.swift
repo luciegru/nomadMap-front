@@ -13,6 +13,8 @@ struct OnBoarding1: View {
     @Environment(LoginViewModel.self) private var loginVM
     @State private var isVisible = false
     private var introductionText: LocalizedStringResource = "WELCOME_TEXT"
+    @State private var showAlert: Bool = false
+    @State private var alertMessage: String = ""
     
     
     var body: some View {
@@ -67,10 +69,26 @@ struct OnBoarding1: View {
                 }
                 
             }
+            .alert("Oops 🙃", isPresented: $showAlert, actions: {
+                Button("OK", role: .cancel) { }
+            }, message: {
+                Text(alertMessage)
+            })
+
             
             .task {
-                let translated = String(localized: introductionText)
-                await viewModel.typeWriterEffect(translationKey: translated)        }
+                do{
+                    let translated = String(localized: introductionText)
+                    await viewModel.typeWriterEffect(translationKey: translated)
+                } catch let error as AppError {
+                                showAlert = true
+                                alertMessage = error.errorDescription ?? ""
+                            } catch {
+                                alertMessage = "Impossible de charger les données de l'album. Vérifie ta connexion."
+                                showAlert = true
+                            }
+                            
+                }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.black)
             .ignoresSafeArea()

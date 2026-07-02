@@ -28,6 +28,8 @@ struct OnBoarding4: View {
     @State private var navigate: Bool = false
     @State private var uploadProgress: Double = 0
     @State private var isUploading: Bool = false
+    @State private var showAlert: Bool = false
+    @State private var alertMessage: String = ""
     
     
     var body: some View {
@@ -91,6 +93,7 @@ struct OnBoarding4: View {
                                 
                                 Button(action: {
                                     Task{
+                                        do{
                                         
                                         try await albumVM.createAlbum(
                                             with: [
@@ -163,8 +166,16 @@ struct OnBoarding4: View {
                                         isUploading = false
                                         
                                         navigate = true
-                                        
+                                        } catch let error as AppError {
+                                                        showAlert = true
+                                                        alertMessage = error.errorDescription ?? ""
+                                                    } catch {
+                                                        alertMessage = "Impossible de charger les données de l'album. Vérifie ta connexion."
+                                                        showAlert = true
+                                                    }
+                                                    
                                     }
+                                        
                                     
                                 }, label: {
                                     GoButton(muted:false)
@@ -188,6 +199,12 @@ struct OnBoarding4: View {
                 }
                 
             }
+            .alert("Oops 🙃", isPresented: $showAlert, actions: {
+                Button("OK", role: .cancel) { }
+            }, message: {
+                Text(alertMessage)
+            })
+
             
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.black)

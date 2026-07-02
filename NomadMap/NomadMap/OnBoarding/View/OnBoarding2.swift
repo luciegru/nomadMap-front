@@ -16,6 +16,8 @@ struct Onboarding2: View {
     @State private var profilPicture : PhotosPickerItem?
     @State private var biography: String = ""
     @State private var navigate = false
+    @State private var showAlert: Bool = false
+    @State private var alertMessage: String = ""
     private var hasGivenAllRequiredInfos: Bool { OBViewModel.profileImage != nil }
     
     var body: some View {
@@ -127,7 +129,16 @@ struct Onboarding2: View {
                                 Button(action: {
                                     
                                     Task{
+                                        do{
                                         try await loginVM.updateProfile(id: loginVM.currentUser!.id, profilePhoto: profilPicture, coverPhoto: coverPicture, fields: ["biography" : biography])
+                                        } catch let error as AppError {
+                                                        showAlert = true
+                                                        alertMessage = error.errorDescription ?? ""
+                                                    } catch {
+                                                        alertMessage = "Impossible de charger les données de l'album. Vérifie ta connexion."
+                                                        showAlert = true
+                                                    }
+                                                    
                                     }
 
                                     navigate = true
@@ -154,6 +165,12 @@ struct Onboarding2: View {
                 }
                 
             }
+            .alert("Oops 🙃", isPresented: $showAlert, actions: {
+                Button("OK", role: .cancel) { }
+            }, message: {
+                Text(alertMessage)
+            })
+
             
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.black)

@@ -13,12 +13,20 @@ struct ContentView: View {
     var body: some View {
         
         if loginVM.currentUser != nil {
-            LandingPageView()
-                .environment(loginVM)
+            if loginVM.currentUser?.accountStatus == 1 {
+                LandingPageView()
+                    .environment(loginVM)
+            } else if loginVM.currentUser?.accountStatus == 0 {
+                OnBoarding1()
+                    .environment(loginVM)
+            }
         } else {
             LoginView().environment(loginVM)
         }
+        //TODO: reset create album form when done
+        //TODO: searchBar can search albumNames and give some suggestions
     }
+    //TODO: manage albumView
 }
 
 #Preview {

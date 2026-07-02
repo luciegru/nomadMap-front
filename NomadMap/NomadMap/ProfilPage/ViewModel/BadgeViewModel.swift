@@ -43,15 +43,16 @@ class BadgeViewModel {
     
     
     func getCurrentUserBadges() async throws {
-        guard let token = loginVM.token else { throw URLError(.userAuthenticationRequired) }
-        guard let url = URL(string: "http://localhost:8080/badge/user") else { throw URLError(.badURL) }
+        guard let token = loginVM.token else { throw AppError.tokenIssue}
+        guard let url = URL(string: "http://localhost:8080/badge/user") else { throw AppError.badURL }
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try NetworkHelper.validateResponse(data: data, response: response)
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         let decodedBadges = try decoder.decode([Badge].self, from: data)
@@ -63,16 +64,17 @@ class BadgeViewModel {
 
     func getAllBadges() async throws {
         guard let token = loginVM.token else {
-            throw URLError(.userAuthenticationRequired) }
+            throw AppError.tokenIssue }
         guard let url = URL(string: "http://localhost:8080/badge") else {
-            throw URLError(.badURL) }
+            throw AppError.badURL }
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try NetworkHelper.validateResponse(data: data, response: response)
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         let decodedBadges = try decoder.decode([Badge].self, from: data)

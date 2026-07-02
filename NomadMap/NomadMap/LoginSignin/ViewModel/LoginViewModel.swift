@@ -41,7 +41,6 @@ class LoginViewModel {
         }
     }
     
-    var errorMessage: LoginError? = nil
     var isAuthenticated: Bool {
         return token != nil && currentUser != nil
     }
@@ -59,34 +58,28 @@ class LoginViewModel {
         }
         
     }
-
-    func login(email: String, password: String) async {
-        guard let url = URL(string: "http://localhost:8080/user/login") else { return }
+    
+    func login(email: String, password: String) async throws {
+        guard let url = URL(string: "http://localhost:8080/user/login") else { throw AppError.badURL }
         
         let body: [String: String] = ["email": email, "password": password]
-        
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        do {
-            request.httpBody = try JSONEncoder().encode(body)
-            
-            let (data, _) = try await URLSession.shared.data(for: request)
-            let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601
-            let decoded = try decoder.decode(LoginResponse.self, from: data)
-            
-            await MainActor.run {
-                self.token = decoded.token
-                self.currentUser = decoded.user
-                self.errorMessage = nil
-            }
-        } catch {
-            
-            await MainActor.run {
-                self.errorMessage = .wrongCredentials
-            }
+        request.httpBody = try JSONEncoder().encode(body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        try NetworkHelper.validateResponse(data: data, response: response)
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let decoded = try decoder.decode(LoginResponse.self, from: data)
+        
+        await MainActor.run {
+            self.token = decoded.token
+            self.currentUser = decoded.user
         }
     }
     
@@ -96,58 +89,22 @@ class LoginViewModel {
     }
     
     func createUser(name: String, firstName: String, username: String, email: String, password: String) async throws {
-        guard let url = URL(string: "http://localhost:8080/user") else {
-            throw URLError(.badURL)
-        }
+        guard let url = URL(string: "http://localhost:8080/user") else { throw AppError.badURL }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        let payload = SIgnInCredentials(
-            name: name,
-            firstName: firstName,
-            email: email,
-            password: password,
-            userName: username
-        )
-        
+        let payload = SIgnInCredentials(name: name, firstName: firstName, email: email, password: password, userName: username)
         request.httpBody = try JSONEncoder().encode(payload)
         
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
         
+        try NetworkHelper.validateResponse(data: data, response: response)
         
-        switch httpResponse.statusCode {
-        case 200, 201:
-            await login(email: email, password: password)
-            
-        case 409:
-            await MainActor.run { self.errorMessage = .usernameTaken }
-            throw LoginError.usernameTaken
-            
-        case 400:
-            if let backendError = try? JSONDecoder().decode(BackendError.self, from: data) {
-                await MainActor.run {
-                    switch backendError.reason {
-                    case "INVALID_PASSWORD_STRUCTURE":
-                        self.errorMessage = .passwordtooweak
-                    case "INVALID_EMAIL":
-                        self.errorMessage = .emailNotValid
-                    case "EMAIL_TAKEN":
-                        self.errorMessage = .emailTaken
-                    default:
-                        self.errorMessage = .unknown
-                    }
-                }
-            }
-            throw LoginError.unknown
-            
-        default:
-            await MainActor.run { self.errorMessage = .unknown }
-            throw URLError(.badServerResponse)
-        }
+        try await login(email: email, password: password)
     }
+    
     func updateProfile(id: UUID, profilePhoto: PhotosPickerItem?, coverPhoto: PhotosPickerItem?, fields: [String: Any]) async throws {
         var fields = fields
         
@@ -159,11 +116,11 @@ class LoginViewModel {
         
         try await updateCurrentUser(with: fields, id: id)
     }
-
+    
     func updateCurrentUser(with fields: [String: Any], id: UUID) async throws {
         
-        guard let token = token else { throw URLError(.userAuthenticationRequired) }
-        guard let url = URL(string: "http://localhost:8080/user/\(id)") else { throw URLError(.badURL) }
+        guard let token = token else { throw AppError.tokenIssue }
+        guard let url = URL(string: "http://localhost:8080/user/\(id)") else { throw AppError.badURL }
         
         
         var request = URLRequest(url: url)
@@ -173,6 +130,9 @@ class LoginViewModel {
         request.httpBody = try JSONSerialization.data(withJSONObject: fields)
         
         let (data, response) = try await URLSession.shared.data(for: request)
+        try NetworkHelper.validateResponse(data: data, response: response)
+        
+        
         //        let jsonString = String(data: data, encoding: .utf8)
         //        print(jsonString ?? "No JSON")
         
@@ -181,7 +141,6 @@ class LoginViewModel {
         formatter.dateFormat = "yyyy/MM/dd"
         decoder.dateDecodingStrategy = .formatted(formatter)
         let updatedUser = try decoder.decode(User.self, from: data)
-        //        print(updatedUser)
         
         await MainActor.run {
             self.currentUser = updatedUser
@@ -190,74 +149,55 @@ class LoginViewModel {
     }
     
     func getCurrentUser() async throws {
-        guard let token = token else {throw URLError(.userAuthenticationRequired) }
-        guard let url = URL(string: "http://localhost:8080/user/myUser") else { throw URLError(.badURL) }
+        guard let token = token else {throw AppError.tokenIssue }
+        guard let url = URL(string: "http://localhost:8080/user/myUser") else { throw AppError.badURL }
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         
-        URLSession.shared.dataTask(with: request) { (data, response, error) in
-            if let data = data {
-//                            let jsonString = String(data: data, encoding: .utf8)
-//                            print(jsonString ?? "No JSON")
-                
-                do{
-                    let decoder = JSONDecoder()
-                    decoder.dateDecodingStrategy = .iso8601
-                    
-                    let decodedUser = try decoder.decode(User.self, from: data)
-                    DispatchQueue.main.async {
-                        self.currentUser = decodedUser
-                    }
-                }
-                catch {
-                    print("Error decoding: \(error)")
-                }
-            }
-            else if let error {
-                print("Error: \(error)")
-            }
-        }.resume()
-
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try NetworkHelper.validateResponse(data: data, response: response)
+        //                            let jsonString = String(data: data, encoding: .utf8)
+        //                            print(jsonString ?? "No JSON")
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        let decodedUser = try decoder.decode(User.self, from: data)
+        
+        await MainActor.run {
+            self.currentUser = decodedUser
+        }
     }
     
     func getDashboardInfos() async throws {
-        guard let token = token else {throw URLError(.userAuthenticationRequired) }
-        guard let url = URL(string: "http://localhost:8080/user/dashboard") else { throw URLError(.badURL) }
+        guard let token = token else {throw AppError.tokenIssue }
+        guard let url = URL(string: "http://localhost:8080/user/dashboard") else { throw AppError.badURL }
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         
-        URLSession.shared.dataTask(with: request) { (data, response, error) in
-            if let data = data {
-//                            let jsonString = String(data: data, encoding: .utf8)
-//                            print(jsonString ?? "No JSON")
-                
-                do{
-                    let decoder = JSONDecoder()
-                    decoder.dateDecodingStrategy = .iso8601
-                    
-                    let decodedDashboard = try decoder.decode(DashboardDTO.self, from: data)
-                    DispatchQueue.main.async {
-                        self.dashboardInfos = decodedDashboard
-                    }
-                }
-                catch {
-                    print("Error decoding: \(error)")
-                }
-            }
-            else if let error {
-                print("Error: \(error)")
-            }
-        }.resume()
-
+        //                            let jsonString = String(data: data, encoding: .utf8)
+        //                            print(jsonString ?? "No JSON")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try NetworkHelper.validateResponse(data: data, response: response)
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        let decodedDashboard = try decoder.decode(DashboardDTO.self, from: data)
+        await MainActor.run {
+            self.dashboardInfos = decodedDashboard
+        }
     }
-
-    
 }
+
+
+
 
 

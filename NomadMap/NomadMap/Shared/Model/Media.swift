@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Media: Codable, Identifiable, Equatable {
+struct Media: Codable, Identifiable, Equatable, Hashable {
     var id: UUID
     var userId: UUID
     var albumId: UUID

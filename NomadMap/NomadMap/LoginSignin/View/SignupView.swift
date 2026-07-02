@@ -16,6 +16,8 @@ struct SignupView: View {
     @State var password: String = ""
     @State var passwordConfirmation: String = ""
     @State var response: String = ""
+    @State private var showAlert: Bool = false
+    @State private var alertMessage: String = ""
     @Environment(LoginViewModel.self) private var loginVM
     
     var body: some View {
@@ -95,23 +97,26 @@ struct SignupView: View {
                     Button(action:{
                         response = ""
                         if password != passwordConfirmation {
-                            response = LoginError.passwordMismatch.errorDescription ?? "ERROR_UNKNOWN"
+                            response = AppError.passwordMismatch.errorDescription ?? "ERROR_UNKNOWN"
                         } else if name.isEmpty || firstname.isEmpty || email.isEmpty || password.isEmpty || passwordConfirmation.isEmpty {
-                            response = LoginError.allFieldsEmpty.errorDescription ?? "ERROR_UNKNOWN"
+                            response = AppError.allFieldsEmpty.errorDescription ?? "ERROR_UNKNOWN"
                         } else if !loginVM.isValidEmail(email) {
-                            response = LoginError.emailNotValid.errorDescription ?? "ERROR_UNKNOWN"
+                            response = AppError.emailNotValid.errorDescription ?? "ERROR_UNKNOWN"
                         } else {
                             Task {
                                 do{
                                     try await loginVM.createUser(name: name, firstName: firstname , username: username, email: email, password: password)
-                                } catch {
-                                    if let error = loginVM.errorMessage {
-                                        response = error.errorDescription ?? "ERROR"
-                                    }
-                                }
+                                } catch let error as AppError {
+                                                showAlert = true
+                                                alertMessage = error.errorDescription ?? ""
+                                            } catch {
+                                                alertMessage = "Impossible de charger les données de l'album. Vérifie ta connexion."
+                                                showAlert = true
+                                            }
+                                            
                             }
-                            
                         }
+                        
                     }, label:{
                         
                         ZStack{
@@ -148,6 +153,12 @@ struct SignupView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.black)
             .ignoresSafeArea()
+            .alert("Oops 🙃", isPresented: $showAlert, actions: {
+                Button("OK", role: .cancel) { }
+            }, message: {
+                Text(alertMessage)
+            })
+
             
         }.navigationBarBackButtonHidden()
     }

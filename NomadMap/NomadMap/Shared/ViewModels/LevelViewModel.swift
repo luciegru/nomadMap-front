@@ -42,15 +42,16 @@ class LevelViewModel {
     
     
     func getCurrentUserLevel() async throws {
-        guard let token = loginVM.token else { throw URLError(.userAuthenticationRequired) }
-        guard let url = URL(string: "http://localhost:8080/level/current") else { throw URLError(.badURL) }
+        guard let token = loginVM.token else { throw AppError.tokenIssue }
+        guard let url = URL(string: "http://localhost:8080/level/current") else { throw AppError.badURL }
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try NetworkHelper.validateResponse(data: data, response: response)
 //        let jsonString = String(data: data, encoding: .utf8)
 //        print("current:  ", jsonString ?? "No JSON")
 
@@ -64,15 +65,16 @@ class LevelViewModel {
     }
 
     func getTargetLevel() async throws {
-        guard let token = loginVM.token else { throw URLError(.userAuthenticationRequired) }
-        guard let url = URL(string: "http://localhost:8080/level/target") else { throw URLError(.badURL) }
+        guard let token = loginVM.token else { throw AppError.tokenIssue }
+        guard let url = URL(string: "http://localhost:8080/level/target") else { throw AppError.badURL }
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try NetworkHelper.validateResponse(data: data, response: response)
 //        let jsonString = String(data: data, encoding: .utf8)
 //        print("target:  ", jsonString ?? "No JSON")
 
@@ -88,16 +90,17 @@ class LevelViewModel {
 
     func getAllLevels() async throws {
         guard let token = loginVM.token else {
-            throw URLError(.userAuthenticationRequired) }
+            throw AppError.tokenIssue }
         guard let url = URL(string: "http://localhost:8080/level") else {
-            throw URLError(.badURL) }
+            throw AppError.badURL }
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try NetworkHelper.validateResponse(data: data, response: response)
 
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601

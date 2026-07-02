@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Album: Codable, Identifiable, Equatable {
+struct Album: Codable, Identifiable, Equatable, Hashable {
     var id: UUID
     var userId: UUID
     var title: String
@@ -22,4 +22,5 @@ struct Album: Codable, Identifiable, Equatable {
     var journeyStartDate: Date
     var journeyEndDate: Date?
     var visibility: Int
+    var medias: [Media]?
 }

@@ -91,8 +91,8 @@ struct CustomMapView: UIViewRepresentable {
             else if let clusterAnno = view.annotation as? MKClusterAnnotation {
                 parent.onClusterTap(clusterAnno.coordinate)
             }
-        }    }
-}
+        }
+    }}
 
 class AlbumAnnotation: NSObject, MKAnnotation {
     let album: Album
@@ -114,16 +114,19 @@ class AlbumAnnotationView: MKAnnotationView {
         didSet {
             guard let albumAnno = annotation as? AlbumAnnotation else { return }
             
+            frame = CGRect(x: -30, y: -80, width: 72, height: 50)
+            
             clusteringIdentifier = "albumCluster"
             collisionMode = .circle
             displayPriority = .required
+            
             let customView = VStack(alignment: .leading) {
                 AlbumCard(album: albumAnno.album)
             }
             
             let hostingController = UIHostingController(rootView: customView)
             hostingController.view.backgroundColor = .clear
-            hostingController.view.frame = CGRect(x: -30, y: -80, width: 72, height: 50)
+            hostingController.view.frame = CGRect(x: 0, y: 0, width: 72, height: 50) 
             
             subviews.forEach { $0.removeFromSuperview() }
             addSubview(hostingController.view)
@@ -147,6 +150,7 @@ class ClusterAnnotationView: MKAnnotationView {
             let hostingController = UIHostingController(rootView: clusterView)
             hostingController.view.backgroundColor = .clear
             hostingController.view.frame = CGRect(x: -30, y: -80, width: 40, height: 40)
+            hostingController.view.isUserInteractionEnabled = false
             
             subviews.forEach { $0.removeFromSuperview() }
             addSubview(hostingController.view)
