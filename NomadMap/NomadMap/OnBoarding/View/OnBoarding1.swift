@@ -77,18 +77,9 @@ struct OnBoarding1: View {
 
             
             .task {
-                do{
-                    let translated = String(localized: introductionText)
-                    await viewModel.typeWriterEffect(translationKey: translated)
-                } catch let error as AppError {
-                                showAlert = true
-                                alertMessage = error.errorDescription ?? ""
-                            } catch {
-                                alertMessage = "Impossible de charger les données de l'album. Vérifie ta connexion."
-                                showAlert = true
-                            }
-                            
-                }
+                let translated = String(localized: introductionText)
+                await viewModel.typeWriterEffect(translationKey: translated)
+            }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.black)
             .ignoresSafeArea()
@@ -98,6 +89,6 @@ struct OnBoarding1: View {
     }
 }
 #Preview {
-    OnBoarding1()
+    OnBoarding1().environment(LoginViewModel())
 }
 

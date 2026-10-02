@@ -23,10 +23,10 @@ struct ContentView: View {
         } else {
             LoginView().environment(loginVM)
         }
-        //TODO: reset create album form when done
-        //TODO: searchBar can search albumNames and give some suggestions
+        //TODO: suggestions ?
     }
-    //TODO: manage albumView
+    //TODO: manage album views
+    //TODO: manage badge logic
 }
 
 #Preview {

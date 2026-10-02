@@ -35,7 +35,6 @@ struct InteractionView: View {
                         Task{
                             try? await participationVM.toggleLike(albumId: album.id.uuidString)
                             likesCount += participationVM.isLiked ? 1 : -1
-                            
                         }
                     }
                 )
@@ -46,7 +45,7 @@ struct InteractionView: View {
                     count: likesCount,
                     isActive: false,
                     action: nil
-                )
+                ).opacity(0.5)
             }
             
             Spacer()
@@ -86,7 +85,7 @@ struct InteractionView: View {
                     count: savesCount,
                     isActive: false,
                     action: nil
-                )
+                ).opacity(0.5)
             }
             
             Spacer()
@@ -120,7 +119,7 @@ struct InteractionView: View {
         }
         .task {
             do{
-            try? await participationVM.getLikeStatus(albumId: album.id.uuidString)
+            try await participationVM.getLikeStatus(albumId: album.id.uuidString)
             likesCount = interactions.likes.count
             } catch let error as AppError {
                             showAlert = true

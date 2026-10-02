@@ -20,6 +20,7 @@ class AlbumViewModel {
     var lastCreatedAlbum: Album? = nil
     var mySavedAlbums: [Album] = []
     var albumInteractions: Interaction? = nil
+    var album: Album? = nil
     
     private var loginVM: LoginViewModel = LoginViewModel()
     
@@ -32,6 +33,28 @@ class AlbumViewModel {
     
     
     //    var user: User? = nil
+    @MainActor
+    func addMedias(_ newMedias: [Media]) {
+        guard var current = album else { return }
+        let existing = Set((current.medias ?? []).map(\.id))
+        current.medias = (current.medias ?? []) + newMedias.filter { !existing.contains($0.id) }
+        album = current
+    }
+
+    @MainActor
+    func removeMedia(id: UUID) {
+        guard var current = album else { return }
+        current.medias?.removeAll { $0.id == id }
+        album = current
+    }
+
+    @MainActor
+    func updateMedia(_ media: Media) {
+        guard var current = album,
+              let i = current.medias?.firstIndex(where: { $0.id == media.id }) else { return }
+        current.medias?[i] = media
+        album = current
+    }
     
     var token: String? {
         didSet {
@@ -172,6 +195,22 @@ class AlbumViewModel {
         
     }
     
+    func searchAlbums(query: String) -> (myAlbums: [Album], publicAlbums: [Album]) {
+        guard !query.isEmpty else { return ([], []) }
+        let q = query.lowercased()
+        let my = myAlbums.filter {
+            $0.title.lowercased().contains(q) ||
+            ($0.town?.lowercased().contains(q) ?? false) ||
+            ($0.country?.lowercased().contains(q) ?? false)
+        }
+        let pub = sharedAlbums.filter {
+            $0.title.lowercased().contains(q) ||
+            ($0.town?.lowercased().contains(q) ?? false) ||
+            ($0.country?.lowercased().contains(q) ?? false)
+        }
+        return (my, pub)
+    }
+    
     func getAlbumInteraction(id: String) async throws{
         guard let token = loginVM.token else {
             throw AppError.tokenIssue }
@@ -195,5 +234,30 @@ class AlbumViewModel {
         
         
     }
+    
+    func getAlbumById(id: String) async throws{
+        guard let token = loginVM.token else {
+            throw AppError.tokenIssue }
+        guard let url = URL(string: "http://localhost:8080/album/\(id)") else {
+            throw AppError.badURL }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try NetworkHelper.validateResponse(data: data, response: response)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let album = try decoder.decode(Album.self, from: data)
+        
+        await MainActor.run {
+            self.album = album
+        }
+        
+        
+    }
+
 }
 

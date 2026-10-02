@@ -48,13 +48,7 @@ struct UploadService {
         
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
-            
-            if let httpResponse = response as? HTTPURLResponse {
-            }
-            
-            if let responseString = String(data: data, encoding: .utf8) {
-            }
-            
+                        
             let json = try JSONDecoder().decode([String: String].self, from: data)
             guard let url = json["url"] else {
                 throw URLError(.badServerResponse)

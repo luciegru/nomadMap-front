@@ -23,6 +23,7 @@ struct CreateAlbumForm: View {
     @Binding var publicAlbum: Bool
     
     @Environment(OnboardingViewModel.self) private var OBVM
+    @Environment(AlbumViewModel.self) private var albumVM
 
     
     var body: some View {
@@ -60,14 +61,15 @@ struct CreateAlbumForm: View {
                         Spacer()
                     }.padding(.leading, 40)
                     
-                    LocationSearchField { location in
+                    MapSearchField(onLocationSelected: { location in
                         self.destinationName = location.name
                         self.town = location.town ?? ""
                         self.continent = location.continent ?? ""
                         self.country = location.country ?? ""
                         self.latitude = location.latitude
                         self.longitude = location.longitude
-                    }.padding(.horizontal, 40)
+                    }, onAlbumSelected: { _ in }).environment(albumVM)
+                    .padding(.horizontal, 40)
                 }
                 
             }.padding(.vertical, 40)

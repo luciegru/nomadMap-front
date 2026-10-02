@@ -183,6 +183,6 @@ struct Onboarding2: View {
 }
 
 #Preview {
-    Onboarding2()
+    Onboarding2().environment(LoginViewModel())
 }
 

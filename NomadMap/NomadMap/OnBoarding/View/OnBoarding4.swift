@@ -10,26 +10,16 @@ import _PhotosUI_SwiftUI
 
 struct OnBoarding4: View {
     @State private var isVisible = false
-    @State private var albumName: String = ""
-    @State private var albumDescription: String = ""
-    @State private var date: Date = Date()
-    @State private var destinationName: String = ""
-    @State private var continent: String = ""
-    @State private var town: String = ""
-    @State private var latitude: Double = 0.0
-    @State private var longitude: Double = 0.0
-    @State private var country: String = ""
-    @State private var albumPictures: [PhotosPickerItem] = []
     @State private var OBViewModel = OnboardingViewModel()
-    @State private var albumVM = AlbumViewModel(loginVM: LoginViewModel())
+    @State private var albumVM = AlbumViewModel()
     @Environment(LoginViewModel.self) private var loginVM
-    @State private var mediaVM = MediaViewModel(loginVM: LoginViewModel())
-    @State private var publicAlbum: Bool = true
+    @State private var mediaVM = MediaViewModel()
     @State private var navigate: Bool = false
     @State private var uploadProgress: Double = 0
     @State private var isUploading: Bool = false
     @State private var showAlert: Bool = false
     @State private var alertMessage: String = ""
+    @State private var createAlbumVM = CreateAlbumViewModel()
     
     
     var body: some View {
@@ -62,8 +52,9 @@ struct OnBoarding4: View {
                         
                         Spacer()
                         
-                        CreateAlbumForm(albumName: $albumName, albumDescription: $albumDescription, date: $date, destinationName: $destinationName, continent: $continent, town: $town, latitude: $latitude, longitude: $longitude, country: $country, albumPictures: $albumPictures, publicAlbum: $publicAlbum)
+                        CreateAlbumForm(albumName: $createAlbumVM.albumName, albumDescription: $createAlbumVM.albumDescription, date: $createAlbumVM.date, destinationName: $createAlbumVM.destinationName, continent: $createAlbumVM.continent, town: $createAlbumVM.town, latitude: $createAlbumVM.latitude, longitude: $createAlbumVM.longitude, country: $createAlbumVM.country, albumPictures: $createAlbumVM.albumPictures, publicAlbum: $createAlbumVM.publicAlbum)
                             .environment(OBViewModel)
+                            .environment(albumVM)
                         
                         HStack{
                             
@@ -89,31 +80,18 @@ struct OnBoarding4: View {
                             
                             
                             Spacer()
-                            if albumName != "" && destinationName != "" {
+                            if createAlbumVM.albumName != "" && createAlbumVM.destinationName != "" {
                                 
                                 Button(action: {
                                     Task{
                                         do{
                                         
-                                        try await albumVM.createAlbum(
-                                            with: [
-                                                "userId":loginVM.currentUser?.id.uuidString ?? UUID().uuidString,
-                                                "title": albumName,
-                                                "description": albumDescription,
-                                                "continent": continent,
-                                                "country": country,
-                                                "town": town,
-                                                "latitude": latitude,
-                                                "longitude": longitude,
-                                                "journeyStartDate": ISO8601DateFormatter().string(from: date),
-                                                "visibility": publicAlbum ? 1 : 0
-                                            ]
-                                            //TODO: manage the lack of coverPicture
-                                        )
+                                        try await albumVM.createAlbum(with: createAlbumVM.toPayload(userId: loginVM.currentUser?.id.uuidString ?? UUID().uuidString))
+                                        
                                         
                                         isUploading = true
                                         uploadProgress = 0
-                                        let total = Double(albumPictures.count)
+                                            let total = Double(createAlbumVM.albumPictures.count)
                                         var completed = 0.0
                                         
                                         
@@ -121,7 +99,7 @@ struct OnBoarding4: View {
                                             let maxConcurrentUploads = 3
                                             var activeUploads = 0
                                             
-                                            for media in albumPictures {
+                                            for media in createAlbumVM.albumPictures {
                                                 if activeUploads >= maxConcurrentUploads {
                                                     await group.next()
                                                     activeUploads -= 1

@@ -45,9 +45,6 @@ class LocationSearchViewModel: NSObject, MKLocalSearchCompleterDelegate {
         // TODO: migrate when Apple provides proper iOS 26 API
         let placemark = item.placemark
         let coordinate = placemark.coordinate
-        let locality = placemark.locality
-        let country = placemark.country
-        let countryCode = placemark.countryCode
 
         selectedLocation = SelectedLocation(
             name: completion.title,

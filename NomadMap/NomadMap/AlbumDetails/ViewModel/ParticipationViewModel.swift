@@ -16,6 +16,9 @@ class ParticipationViewModel {
     
     var participations: [User] = []
     var isLiked: Bool = false
+    var isMediaLiked: Bool = false
+    var mediaLikes: [MediaLike] = []
+
     var permission: Participation? = nil
     
     private var loginVM: LoginViewModel = LoginViewModel()
@@ -142,5 +145,92 @@ class ParticipationViewModel {
             self.isLiked = decodedResponse.isLiked
         }
     }
+    
+    
+    func getMediaLikeStatus(mediaId: String) async throws {
+        guard let token = loginVM.token else {
+            throw AppError.tokenIssue }
+        guard let url = URL(string: "http://localhost:8080/mediaLike/status/\(mediaId)") else {
+            throw AppError.badURL }
+        
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try NetworkHelper.validateResponse(data: data, response: response)
+//                        let jsonString = String(data: data, encoding: .utf8)
+//                        print("get Status \(jsonString)" ?? "No JSON")
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let decodedLikeStatus = try decoder.decode(IsLiked.self, from: data)
+        
+        await MainActor.run {
+            self.isMediaLiked = decodedLikeStatus.isLiked
+        }
+    }
+
+    
+    func toggleMediaLike(mediaId: String) async throws {
+        guard let token = loginVM.token else { throw AppError.tokenIssue }
+
+        guard let url = URL(string: "http://localhost:8080/mediaLike/toggle/\(mediaId)") else { throw AppError.badURL}
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try NetworkHelper.validateResponse(data: data, response: response)
+//        let jsonString = String(data: data, encoding: .utf8)
+//        print("toggle: \(jsonString)" ?? "No JSON")
+
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        let decodedResponse = try decoder.decode(IsLiked.self, from: data)
+        
+        await MainActor.run {
+            self.isMediaLiked = decodedResponse.isLiked
+        }
+    }
+    
+    func getMediaLike(mediaId: String) async throws {
+        guard let token = loginVM.token else {
+            throw AppError.tokenIssue }
+        guard let url = URL(string: "http://localhost:8080/mediaLike/\(mediaId)") else {
+            throw AppError.badURL }
+        
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try NetworkHelper.validateResponse(data: data, response: response)
+//                        let jsonString = String(data: data, encoding: .utf8)
+//                        print("get likes \(jsonString)" ?? "No JSON")
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let decodedLike = try decoder.decode([MediaLike].self, from: data)
+        
+        await MainActor.run {
+            self.mediaLikes = decodedLike
+        }
+    }
+
+    
+    
+
 }
 

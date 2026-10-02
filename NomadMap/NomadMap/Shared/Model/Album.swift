@@ -23,4 +23,16 @@ struct Album: Codable, Identifiable, Equatable, Hashable {
     var journeyEndDate: Date?
     var visibility: Int
     var medias: [Media]?
+    
+    
+    
+    var displayLocation: String {
+            if let town = town, !town.isEmpty {
+                return town
+            } else if let country = country, !country.isEmpty {
+                return country
+            } else {
+                return continent ?? ""
+            }
+        }
 }

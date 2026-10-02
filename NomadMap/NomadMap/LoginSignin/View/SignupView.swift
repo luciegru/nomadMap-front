@@ -29,7 +29,7 @@ struct SignupView: View {
                         Rectangle()
                             .frame(width: 80, height: 80)
                             .cornerRadius(25)
-                            .foregroundColor(.red)
+                            .foregroundColor(Color("black_1"))
                             .shadow(radius: 10)
                             .customGradient()
                         
@@ -124,7 +124,7 @@ struct SignupView: View {
                             Rectangle()
                                 .frame(width: 200, height: 50)
                                 .cornerRadius(15)
-                                .foregroundColor(.red)
+                                .foregroundColor(Color("black_1"))
                                 .shadow(radius: 10)
                                 .customGradient()
                             

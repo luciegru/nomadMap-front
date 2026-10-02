@@ -41,6 +41,8 @@ class LoginViewModel {
         }
     }
     
+    
+    var user: User?
     var isAuthenticated: Bool {
         return token != nil && currentUser != nil
     }
@@ -133,13 +135,12 @@ class LoginViewModel {
         try NetworkHelper.validateResponse(data: data, response: response)
         
         
-        //        let jsonString = String(data: data, encoding: .utf8)
-        //        print(jsonString ?? "No JSON")
+//                let jsonString = String(data: data, encoding: .utf8)
+//                print(jsonString ?? "No JSON")
         
         let decoder = JSONDecoder()
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy/MM/dd"
-        decoder.dateDecodingStrategy = .formatted(formatter)
+        decoder.dateDecodingStrategy = .iso8601
         let updatedUser = try decoder.decode(User.self, from: data)
         
         await MainActor.run {
@@ -172,6 +173,24 @@ class LoginViewModel {
             self.currentUser = decodedUser
         }
     }
+    
+    func getUserById(userId: UUID) async throws -> User {
+        guard let token = token else { throw AppError.tokenIssue }
+        guard let url = URL(string: "http://localhost:8080/user/\(userId)") else { throw AppError.badURL }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try NetworkHelper.validateResponse(data: data, response: response)
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return try decoder.decode(User.self, from: data)
+    }
+    
     
     func getDashboardInfos() async throws {
         guard let token = token else {throw AppError.tokenIssue }

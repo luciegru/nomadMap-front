@@ -16,6 +16,7 @@ struct ProfilPage: View {
     @State var levelVM = LevelViewModel()
     @State private var showAlert: Bool = false
     @State private var alertMessage: String = ""
+    @State private var showUpdateProfil: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -89,7 +90,9 @@ struct ProfilPage: View {
                                 SectionWithProgressBar(title: "STORAGE_STATUS", currentIntText: "\(String(loginVM.currentUser?.usedStorage ?? 0))GB", subtitleText: "💾Max \(String(loginVM.currentUser?.ownedStorage ?? 0))", color: "red_1", maxValue: Int(loginVM.currentUser?.ownedStorage ?? 0), currentValue: Int(loginVM.currentUser?.usedStorage ?? 0))
                                 
                                 
-                                Button(action:{}, label:{
+                                Button(action:{
+                                showUpdateProfil = true
+                                }, label:{
                                     CustomGradientButton(text: "UPDATE_PROFILE", muted: false)
                                 })
                                 
@@ -117,10 +120,12 @@ struct ProfilPage: View {
                                 )
                                 .padding(.vertical, 25)
                                 
-                                Button(action:{}, label:{
+                                Button(action:{
+                                    loginVM.logout()
+                                }, label:{
                                     CustomGradientButton(text: "DISCONNECT", muted: false)
                                 })
-                                
+                                //TODO: earn points logic
                                 Button(action:{}, label:{
                                     Text("DELETE_ACCOUNT")
                                         .font(Font.system(size: 18, weight: .semibold))
@@ -139,7 +144,6 @@ struct ProfilPage: View {
                     }
 
 
-//TODO: Create all the levels
 //TODO: clean the storage logic 
                 }
             }
@@ -148,19 +152,29 @@ struct ProfilPage: View {
             }, message: {
                 Text(alertMessage)
             })
+            
+            .sheet(isPresented: $showUpdateProfil) {
+                UpdateProfileForm(currentUser: loginVM.currentUser!, showUpdateProfil: $showUpdateProfil)
+                    .ignoresSafeArea()
+                    .background(Color("black_1"))
+                
+
+                }
+
+
 
             .background(Color("black_1"))
             .ignoresSafeArea(edges: .top)
             
             .task {
                 do {
-                    async let userLoad = loginVM.getCurrentUser()
-                    async let allBadgesLoad = badgeVM.getAllBadges()
-                    async let myBadgesLoad = badgeVM.getCurrentUserBadges()
-                    async let currentUserLevel = levelVM.getCurrentUserLevel()
-                    async let targetLevel = levelVM.getTargetLevel()
-                    async let dashboardLoad = loginVM.getDashboardInfos()
-                    async let savedAlbumsLoad = albumVM.getCurrentUserSavedAlbums()
+                    async let userLoad: () = loginVM.getCurrentUser()
+                    async let allBadgesLoad: () = badgeVM.getAllBadges()
+                    async let myBadgesLoad: () = badgeVM.getCurrentUserBadges()
+                    async let currentUserLevel: () = levelVM.getCurrentUserLevel()
+                    async let targetLevel: () = levelVM.getTargetLevel()
+                    async let dashboardLoad: () = loginVM.getDashboardInfos()
+                    async let savedAlbumsLoad: () = albumVM.getCurrentUserSavedAlbums()
                     
                     let _ = try await (userLoad, allBadgesLoad, myBadgesLoad, currentUserLevel, targetLevel, dashboardLoad, savedAlbumsLoad)
                 } catch let error as AppError {
